@@ -34,6 +34,38 @@ print(dump({
 --     val = "repo-value"
 -- }
 
+-- set static segment on same level of parameter segments
+p:set('/repos/:owner/settings', 'settings-value')
+val, err, glob = p:lookup('/repos/foo/settings')
+print(dump({
+    val = val,
+    err = err,
+    glob = glob,
+}))
+-- {
+--     glob = {
+--         [1] = "repos-value",
+--         owner = "foo",
+--     },
+--     val = "settings-value"
+-- }
+
+-- it returns the value of the parameter segment if it does not match any static segment
+val, err, glob = p:lookup('/repos/foo/non-static-segment')
+print(dump({
+    val = val,
+    err = err,
+    glob = glob,
+}))
+-- {
+--     glob = {
+--         [1] = "repos-value",
+--         owner = "foo",
+--         repo = "non-static-segment"
+--     },
+--     val = "repo-value"
+-- }
+
 -- set pathname with catch-all segment
 p:set('/repos/:owner/:repo/contents/*path', 'contents-path-value')
 val, err, glob = p:lookup('/repos/foo/bar/contents/my/contents/filename.txt')
