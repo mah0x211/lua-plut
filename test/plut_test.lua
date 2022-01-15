@@ -736,3 +736,51 @@ function testcase.lookup_catchall()
     })
 end
 
+function testcase.dump()
+    local p = assert(plut.new())
+    local list = {}
+    for _, v in ipairs({
+        {
+            pathname = '/foo',
+            value = 'foo-value',
+        },
+        {
+            pathname = '/foo/bar/',
+            value = 'bar-trail-value',
+        },
+        {
+            pathname = '/foo/bar',
+            value = 'bar-value',
+        },
+        {
+            pathname = '/',
+            value = 'root-value',
+        },
+        {
+            pathname = '/foo/:bar',
+            value = 'barvar-value',
+        },
+        {
+            pathname = '/foo/:bar/baz/',
+            value = 'baz-value',
+        },
+        {
+            pathname = '/foo/:bar/baz/:var/qux',
+            value = 'qux-value',
+        },
+        {
+            pathname = '/foo/bar/qux/quux',
+            value = 'quux-value',
+        },
+        {
+            pathname = '/hello/*world',
+            value = 'world-value',
+        },
+    }) do
+        assert(p:set(v.pathname, v.value))
+        list[v.pathname] = v.value
+    end
+
+    -- test that list the registered pathname and value pairs
+    assert.equal(p:dump(), list)
+end

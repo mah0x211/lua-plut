@@ -151,6 +151,15 @@ get the value of the specified pathname.
 - `err:error`: an error object.
 
 
+## list = p:dump()
+
+get the list of registered pathname/value pairs.
+
+**Returns**
+
+- `list:table`: the list of registered pathname/value pairs.
+
+
 ## val, err, glob = p:lookup( pathname )
 
 lookup the values in the specified pathname.

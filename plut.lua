@@ -388,6 +388,39 @@ function Plut:get(pathname)
     return node[SYM_EOS]
 end
 
+--- dumper
+--- @param list table
+--- @param pathname string
+--- @param node table
+--- @return table list
+local function dumper(list, pathname, node)
+    if node['/'] then
+        list[pathname .. '/'] = node['/'][SYM_EOS]
+    end
+
+    for seg, v in pairs(node) do
+        if seg ~= '/' then
+            if seg == SYM_EOS then
+                list[pathname] = v
+            elseif seg == SYM_VAR then
+                dumper(list, pathname .. '/:' .. v.name, v.node)
+            elseif seg == SYM_ALL then
+                dumper(list, pathname .. '/*' .. v.name, v.node)
+            else
+                dumper(list, pathname .. '/' .. seg, v)
+            end
+        end
+    end
+
+    return list
+end
+
+--- dump
+--- @return table<string, any> list
+function Plut:dump()
+    return dumper({}, '', self.tree)
+end
+
 --- lookup
 --- @param pathname string
 --- @return any val
