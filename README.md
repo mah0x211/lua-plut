@@ -51,6 +51,38 @@ print(dump({
 --     val = "repo-value"
 -- }
 
+-- set static segment on same level of parameter segments
+p:set('/repos/:owner/settings', 'settings-value')
+val, err, glob = p:lookup('/repos/foo/settings')
+print(dump({
+    val = val,
+    err = err,
+    glob = glob,
+}))
+-- {
+--     glob = {
+--         [1] = "repos-value",
+--         owner = "foo"
+--     },
+--     val = "settings-value"
+-- }
+
+-- it returns the value of the parameter segment if it does not match any static segment
+val, err, glob = p:lookup('/repos/foo/non-static-segment')
+print(dump({
+    val = val,
+    err = err,
+    glob = glob,
+}))
+-- {
+--     glob = {
+--         [1] = "repos-value",
+--         owner = "foo",
+--         repo = "non-static-segment"
+--     },
+--     val = "repo-value"
+-- }
+
 -- set pathname with catch-all segment
 p:set('/repos/:owner/:repo/contents/*path', 'contents-path-value')
 val, err, glob = p:lookup('/repos/foo/bar/contents/my/contents/filename.txt')
@@ -97,6 +129,7 @@ the value of the `code` field in the error message will be one of the following 
 - `plut.EALREADY`: segment already defined.
 - `plut.EVALREADY`: variable segment already defined.
 - `plut.ETOOMANYSEG`: cannot create a segment after a catch-all segment.
+- `plut.ECOEXIST`: catch-all segment cannot coexist with other segments.
 
 
 ## p = plut.new()
@@ -121,6 +154,48 @@ set the value to the last segment of the specified pathname.
 
 - `ok:boolean`: `true` on success.
 - `err:error`: an error object.
+
+
+**Note**
+
+the pathname can contain parameter segments and catch-all segments.
+
+the parameter segment must started with a ':' mark, and the catch-all segment must started with a '*' mark as shown below. 
+
+```
+/foo/:param/bar/*catchall
+```
+
+**Constraints:**
+
+- A parameter segment and a catch-all segment can be defined only once in the same hierarchy.
+
+```
+/foo/:bar/quux
+/foo/:baa/quux  <-- NG :bar already defined
+/foo/*qux/quux  <-- NG :bar already defined
+/foo/baz/quux   <-- OK static segment can be mixed with parameter segment
+```
+
+- A catch-all segment cannot be mixed with other segments.
+
+```
+/hello/*world
+/hello/*world/quux  <-- NG cannot add any segment under the catch-all segment
+/hello/*baa/quux    <-- NG :*world already defined
+/hello/:bar/quux    <-- NG :*world already defined
+/hello/baz/quux     <-- NG :*world already defined
+```
+
+- If a static segment and a parameter segment exist in the same hierarchy, the static segment will be used first.
+
+```
+/foo/baz/quux   <-- 'baz' segment priorty is higher than parameter segment
+/foo/:bar/quux 
+
+lookup '/foo/baz/quux' will matche '/foo/baz/quux'
+lookup '/foo/baa/quux' will matche '/foo/:bar/quux'
+```
 
 
 ## val, err = p:del( pathname )
@@ -172,7 +247,6 @@ lookup the values in the specified pathname.
 
 - `val:any`: the value of the last segment of the specified pathname.
 - `err:error`: an error object.
-- `glob:table`: holds the value on the route up to the last segment.
-
+- `glob:table`: holds the values on the route up to the last segment.
 
 
