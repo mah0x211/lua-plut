@@ -247,7 +247,7 @@ function testcase.set()
     -- test that return ETOOMANYSEG
     for _, v in ipairs({
         '/hello/*world/baz',
-        '/foo/bar/*all',
+        '/foo/bar/qux/quux/*catchall/nest',
     }) do
         ok, err = p:set(v, 'new-value')
         assert.is_false(ok)
@@ -723,7 +723,7 @@ end
 function testcase.lookup_catchall()
     local p = assert(plut.new())
 
-    -- test that catchall parameter
+    -- test that catch-all parameter
     assert(p:set('/hello/:world', 'hello-world'))
     assert(p:set('/hello/:world/foo/*catchall', 'catch-the-world'))
     local val, err, glob = p:lookup('/hello/my/foo/world/segment')

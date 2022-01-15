@@ -59,6 +59,7 @@ local EUNNAMED = 4
 local EALREADY = 5
 local EVALREADY = 6
 local ETOOMANYSEG = 7
+local ECOEXIST = 8
 local ERRSTR = {
     [EPATHNAME] = 'pathname must be absolute path',
     [EEMPTY] = 'cannot use empty segment',
@@ -67,6 +68,7 @@ local ERRSTR = {
     [EALREADY] = 'segment already defined',
     [EVALREADY] = 'variable segment already defined',
     [ETOOMANYSEG] = 'cannot create a segment after a catch-all segment',
+    [ECOEXIST] = 'catch-all segment cannot coexist with other segments',
 }
 
 --- mkerror
@@ -85,6 +87,22 @@ local function is_error(err)
     if err then
         return error_cause(err)
     end
+end
+
+--- has_child
+--- @param node table
+--- @return boolean
+local function has_child(node)
+    local k = next(node)
+
+    while k do
+        if k ~= SYM_EOS then
+            return true
+        end
+        k = next(node, k)
+    end
+
+    return false
 end
 
 --- mknode
@@ -121,9 +139,9 @@ local function mknode(_, _, seg, node, prev)
 
         -- not found
         if not vnode then
-            if prev.is_catchall and next(node) then
-                -- cannot insert a catch-all segment
-                return nil, mkerror('mknode', ETOOMANYSEG)
+            if prev.is_catchall and has_child(node) then
+                -- catch-all segment cannot coexist with other segments
+                return nil, mkerror('mknode', ECOEXIST)
             elseif node[SYM_ALL] or node[SYM_VAR] then
                 -- variable-segment already defined
                 return nil, mkerror('mknode', EVALREADY)
@@ -142,6 +160,12 @@ local function mknode(_, _, seg, node, prev)
         node[vseg] = vnode
 
         return vnode.node
+    end
+
+    -- catch-all segment exists
+    if node[SYM_ALL] then
+        -- catch-all segment cannot coexist with other segments
+        return nil, mkerror('mknode', ECOEXIST)
     end
 
     -- found node
@@ -462,4 +486,5 @@ return {
     EALREADY = EALREADY,
     EVALREADY = EVALREADY,
     ETOOMANYSEG = ETOOMANYSEG,
+    ECOEXIST = ECOEXIST,
 }
