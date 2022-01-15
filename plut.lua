@@ -110,14 +110,14 @@ end
 --- @param pos integer
 --- @param seg string
 --- @param node table
---- @param prev table
+--- @param mklist table
 --- @return table node
 --- @return error err
-local function mknode(_, _, seg, node, prev)
+local function mknode(_, _, seg, node, mklist)
     if #seg == 0 then
         -- cannot use empty segment
         return nil, mkerror('mknode', EEMPTY)
-    elseif prev.is_catchall then
+    elseif mklist.is_catchall then
         -- cannot create a segment after a catch-all segment
         return nil, mkerror('mknode', ETOOMANYSEG)
     end
@@ -135,11 +135,11 @@ local function mknode(_, _, seg, node, prev)
 
         local vnode = node[vseg]
 
-        prev.is_catchall = vseg == SYM_ALL
+        mklist.is_catchall = vseg == SYM_ALL
 
         -- not found
         if not vnode then
-            if prev.is_catchall and has_child(node) then
+            if mklist.is_catchall and has_child(node) then
                 -- catch-all segment cannot coexist with other segments
                 return nil, mkerror('mknode', ECOEXIST)
             elseif node[SYM_ALL] or node[SYM_VAR] then
@@ -151,6 +151,10 @@ local function mknode(_, _, seg, node, prev)
             vnode = {
                 name = name,
                 node = {},
+            }
+            mklist[#mklist + 1] = {
+                node = node,
+                seg = vseg,
             }
         elseif vnode.name ~= name then
             -- variable-segment already defined
@@ -175,6 +179,10 @@ local function mknode(_, _, seg, node, prev)
 
     -- create new node
     node[seg] = {}
+    mklist[#mklist + 1] = {
+        node = node,
+        seg = seg,
+    }
 
     return node[seg]
 end
@@ -346,9 +354,14 @@ function Plut:set(pathname, val)
     end
 
     -- create node
-    local node, err = traverse(pathname, self.tree, mknode, {})
+    local mklist = {}
+    local node, err = traverse(pathname, self.tree, mknode, mklist)
 
     if not node then
+        -- remove created node
+        for _, v in ipairs(mklist) do
+            v.node[v.seg] = nil
+        end
         return false, err
     elseif node[SYM_EOS] then
         return false, mkerror('set', EALREADY)

@@ -6,6 +6,7 @@ function testcase.set()
     local p = assert(plut.new())
 
     -- test that set segment values
+    local last_equal
     for _, v in ipairs({
         {
             pathname = '/foo',
@@ -196,6 +197,7 @@ function testcase.set()
         local ok, err = p:set(v.pathname, v.value)
         assert(ok, tostring(err))
         assert.equal(p.tree, v.equal)
+        last_equal = v.equal
     end
 
     -- test that return EPATHNAME
@@ -203,6 +205,7 @@ function testcase.set()
     assert.is_false(ok)
     local msg = assert(plut.is_error(err))
     assert.equal(msg.code, plut.EPATHNAME)
+    assert.equal(p.tree, last_equal)
 
     -- test that return ERESERVED
     for _, pathname in ipairs({
@@ -213,6 +216,7 @@ function testcase.set()
         assert.is_false(ok)
         msg = assert(plut.is_error(err))
         assert.equal(msg.code, plut.ERESERVED)
+        assert.equal(p.tree, last_equal)
     end
 
     -- test that return EEMPTY
@@ -220,18 +224,21 @@ function testcase.set()
     assert.is_false(ok)
     msg = assert(plut.is_error(err))
     assert.equal(msg.code, plut.EEMPTY)
+    assert.equal(p.tree, last_equal)
 
     -- test that return EALREADY
     ok, err = p:set('/foo', 'new-value')
     assert.is_false(ok)
     msg = assert(plut.is_error(err))
     assert.equal(msg.code, plut.EALREADY)
+    assert.equal(p.tree, last_equal)
 
     -- test that return EUNNAMED
     ok, err = p:set('/:/bar', 'new-value')
     assert.is_false(ok)
     msg = assert(plut.is_error(err))
     assert.equal(msg.code, plut.EUNNAMED)
+    assert.equal(p.tree, last_equal)
 
     -- test that return EVALREADY
     for _, v in ipairs({
@@ -242,6 +249,7 @@ function testcase.set()
         assert.is_false(ok)
         msg = assert(plut.is_error(err))
         assert.equal(msg.code, plut.EVALREADY)
+        assert.equal(p.tree, last_equal)
     end
 
     -- test that return ETOOMANYSEG
@@ -253,6 +261,19 @@ function testcase.set()
         assert.is_false(ok)
         msg = assert(plut.is_error(err))
         assert.equal(msg.code, plut.ETOOMANYSEG)
+        assert.equal(p.tree, last_equal)
+    end
+
+    -- test that return ECOEXIST
+    for _, v in ipairs({
+        '/*catchall',
+        '/hello/my-world',
+    }) do
+        ok, err = p:set(v, 'new-value')
+        assert.is_false(ok)
+        msg = assert(plut.is_error(err))
+        assert.equal(msg.code, plut.ECOEXIST)
+        assert.equal(p.tree, last_equal)
     end
 end
 
