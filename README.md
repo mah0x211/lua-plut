@@ -160,7 +160,7 @@ set the value to the last segment of the specified pathname.
 
 the pathname can contain parameter segments and catch-all segments.
 
-the parameter segment must started with a ':' mark, and the catch-all segment must started with a '*' mark as shown below. 
+the parameter segment must started with a `:` mark, and the catch-all segment must started with a `*` mark as shown below. 
 
 ```
 /foo/:param/bar/*catchall
@@ -182,9 +182,9 @@ the parameter segment must started with a ':' mark, and the catch-all segment mu
 ```
 /hello/*world
 /hello/*world/quux  <-- NG cannot add any segment under the catch-all segment
-/hello/*baa/quux    <-- NG :*world already defined
-/hello/:bar/quux    <-- NG :*world already defined
-/hello/baz/quux     <-- NG :*world already defined
+/hello/*baa/quux    <-- NG *world already defined
+/hello/:bar/quux    <-- NG *world already defined
+/hello/baz/quux     <-- NG *world already defined
 ```
 
 - If a static segment and a parameter segment exist in the same hierarchy, the static segment will be used first.
