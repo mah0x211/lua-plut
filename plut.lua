@@ -298,7 +298,7 @@ local function traverse(pathname, node, fn, ...)
     end
 
     local pos = 2
-    local head, tail = find(pathname, '/', pos)
+    local head, tail = find(pathname, '/', pos, true)
     while head do
         local seg = sub(pathname, pos, head - 1)
 
@@ -315,7 +315,7 @@ local function traverse(pathname, node, fn, ...)
 
         node = child
         pos = tail + 1
-        head, tail = find(pathname, '/', pos)
+        head, tail = find(pathname, '/', pos, true)
     end
 
     -- check last segment
