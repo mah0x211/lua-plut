@@ -1,4 +1,5 @@
 require('luacov')
+local unpack = unpack or table.unpack
 local testcase = require('testcase')
 local plut = require('plut')
 
@@ -274,6 +275,25 @@ function testcase.set()
         msg = assert(plut.is_error(err))
         assert.equal(msg.code, plut.ECOEXIST)
         assert.equal(p.tree, last_equal)
+    end
+
+    -- test that throw an error
+    for _, v in ipairs({
+        {
+            arg = {},
+            err = 'pathname must be string',
+        },
+        {
+            arg = {
+                '/throw-error',
+            },
+            err = 'val must not be nil',
+        },
+    }) do
+        err = assert.throws(function()
+            p:set(unpack(v.arg))
+        end)
+        assert.match(err, v.err)
     end
 end
 
@@ -555,6 +575,12 @@ function testcase.del()
         assert.is_nil(err)
         assert.equal(p.tree, v.equal)
     end
+
+    -- test that throw an error
+    err = assert.throws(function()
+        p:del()
+    end)
+    assert.match(err, 'pathname must be string')
 end
 
 function testcase.get()
@@ -607,9 +633,158 @@ function testcase.get()
     local val, err = p:get('/foo/:baa')
     assert.is_nil(val)
     assert.is_nil(err)
+
+    -- test that throw an error
+    err = assert.throws(function()
+        p:get()
+    end)
+    assert.match(err, 'pathname must be string')
 end
 
 function testcase.lookup()
+    local p = assert(plut.new())
+    for _, v in ipairs({
+        {
+            pathname = '/foo',
+            value = 'foo-value',
+        },
+        {
+            pathname = '/foo/bar/',
+            value = 'bar-trail-value',
+        },
+        {
+            pathname = '/foo/bar',
+            value = 'bar-value',
+        },
+        {
+            pathname = '/',
+            value = 'root-value',
+        },
+        {
+            pathname = '/foo/:bar',
+            value = 'barvar-value',
+        },
+        {
+            pathname = '/foo/:bar/baz/',
+            value = 'baz-value',
+        },
+        {
+            pathname = '/foo/:bar/baz/:var/qux',
+            value = 'qux-value',
+        },
+        {
+            pathname = '/foo/bar/qux/quux',
+            value = 'quux-value',
+        },
+        {
+            pathname = '/hello/*world',
+            value = 'world-value',
+        },
+    }) do
+        assert(p:set(v.pathname, v.value))
+    end
+
+    -- test that find the values of path segments
+    for _, v in ipairs({
+        {
+            pathname = '/foo',
+            value = 'foo-value',
+            glob = {},
+        },
+        {
+            pathname = '/foo/bar/',
+            value = 'bar-trail-value',
+            glob = {},
+        },
+        {
+            pathname = '/foo/bar',
+            value = 'bar-value',
+            glob = {},
+        },
+        {
+            pathname = '/',
+            value = 'root-value',
+            glob = {},
+        },
+        {
+            pathname = '/foo/hello',
+            value = 'barvar-value',
+            glob = {
+                bar = 'hello',
+            },
+        },
+        {
+            pathname = '/foo/hello/baz/',
+            value = 'baz-value',
+            glob = {
+                bar = 'hello',
+            },
+        },
+        {
+            pathname = '/foo/hello/baz/world/qux',
+            value = 'qux-value',
+            glob = {
+                bar = 'hello',
+                var = 'world',
+            },
+        },
+        {
+            pathname = '/foo/bar/qux/quux',
+            value = 'quux-value',
+            glob = {},
+        },
+        {
+            pathname = '/hello/*world',
+            value = 'world-value',
+            glob = {
+                world = '*world',
+            },
+        },
+    }) do
+        local val, err, glob = p:lookup(v.pathname)
+        assert(val, tostring(err))
+        assert.equal(val, v.value)
+        assert.is_nil(err)
+        assert.equal(glob, v.glob)
+    end
+
+    -- test that throw an error
+    for _, v in ipairs({
+        {
+            arg = {},
+            err = 'pathname must be string',
+        },
+        {
+            arg = {
+                'foo',
+                1,
+            },
+            err = 'pickup must be boolean',
+        },
+    }) do
+        local err = assert.throws(function()
+            p:lookup(unpack(v.arg))
+        end)
+        assert.match(err, v.err)
+    end
+end
+
+function testcase.lookup_catchall()
+    local p = assert(plut.new())
+
+    -- test that catch-all parameter
+    assert(p:set('/hello/:world', 'hello-world'))
+    assert(p:set('/hello/:world/foo/*catchall', 'catch-the-world'))
+    local val, err, glob = p:lookup('/hello/my/foo/world/segment')
+    assert.equal(val, 'catch-the-world')
+    assert.is_nil(err)
+    assert.equal(glob, {
+        world = 'my',
+        catchall = 'world/segment',
+    })
+end
+
+function testcase.pickup()
     local p = assert(plut.new())
     for _, v in ipairs({
         {
@@ -733,7 +908,7 @@ function testcase.lookup()
             },
         },
     }) do
-        local val, err, glob = p:lookup(v.pathname)
+        local val, err, glob = p:lookup(v.pathname, true)
         assert(val, tostring(err))
         assert.equal(val, v.value)
         assert.is_nil(err)
@@ -741,13 +916,13 @@ function testcase.lookup()
     end
 end
 
-function testcase.lookup_catchall()
+function testcase.pickup_catchall()
     local p = assert(plut.new())
 
     -- test that catch-all parameter
     assert(p:set('/hello/:world', 'hello-world'))
     assert(p:set('/hello/:world/foo/*catchall', 'catch-the-world'))
-    local val, err, glob = p:lookup('/hello/my/foo/world/segment')
+    local val, err, glob = p:lookup('/hello/my/foo/world/segment', true)
     assert.equal(val, 'catch-the-world')
     assert.is_nil(err)
     assert.equal(glob, {

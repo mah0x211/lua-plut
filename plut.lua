@@ -249,15 +249,20 @@ end
 --- @param seg string
 --- @param node table
 --- @param glob table
+--- @param pickup boolean
 --- @return table node
 --- @return integer err
-local function lookup(pathname, pos, seg, node, glob)
-    if node[SYM_EOS] then
-        glob[#glob + 1] = node[SYM_EOS]
-    end
+local function lookup(pathname, pos, seg, node, glob, pickup)
+    if pickup then
+        -- pickup the node-value
+        if node[SYM_EOS] then
+            glob[#glob + 1] = node[SYM_EOS]
+        end
 
-    if seg ~= '/' and node['/'] then
-        glob[#glob + 1] = node['/'][SYM_EOS]
+        -- pickup the node-value of the trailing-slash node
+        if seg ~= '/' and node['/'] then
+            glob[#glob + 1] = node['/'][SYM_EOS]
+        end
     end
 
     -- found segment
@@ -460,16 +465,19 @@ end
 
 --- lookup
 --- @param pathname string
+--- @param pickup boolean
 --- @return any val
 --- @return error err
 --- @return table glob
-function Plut:lookup(pathname)
+function Plut:lookup(pathname, pickup)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
+    elseif pickup ~= nil and type(pickup) ~= 'boolean' then
+        error('pickup must be boolean', 2)
     end
 
     local glob = {}
-    local node, err = traverse(pathname, self.tree, lookup, glob)
+    local node, err = traverse(pathname, self.tree, lookup, glob, pickup)
 
     if not node then
         return nil, err
