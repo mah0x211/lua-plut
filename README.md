@@ -235,18 +235,19 @@ get the list of registered pathname/value pairs.
 - `list:table`: the list of registered pathname/value pairs.
 
 
-## val, err, glob = p:lookup( pathname )
+## val, err, glob = p:lookup( pathname [, pickup] )
 
 lookup the values in the specified pathname.
 
 **Parameters**
 
 - `pathname:string`: target pathname.
+- `pickup:boolean`: picking up the node values on the route up to the last segment.
 
 **Returns**
 
 - `val:any`: the value of the last segment of the specified pathname.
 - `err:error`: an error object.
-- `glob:table`: holds the values on the route up to the last segment.
+- `glob:table`: holds the node values on the route up to the last segment, and the values of variable segment.
 
 
