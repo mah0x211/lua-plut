@@ -29,7 +29,6 @@ local error_cause = error.cause
 local check = error.check
 local check_table = check.table
 local check_func = check.func
-local string = require('stringex')
 local find = string.find
 local sub = string.sub
 local setmetatable = setmetatable

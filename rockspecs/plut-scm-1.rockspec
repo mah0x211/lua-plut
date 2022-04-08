@@ -12,7 +12,6 @@ description = {
 dependencies = {
     'lua >= 5.1',
     'error >= 0.6.1',
-    'stringex >= 0.2.1',
 }
 build = {
     type = 'builtin',
