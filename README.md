@@ -1,7 +1,7 @@
 # lua-plut
 
 [![test](https://github.com/mah0x211/lua-plut/actions/workflows/test.yml/badge.svg)](https://github.com/mah0x211/lua-plut/actions/workflows/test.yml)
-[![Coverage Status](https://coveralls.io/repos/github/mah0x211/lua-plut/badge.svg?branch=master)](https://coveralls.io/github/mah0x211/lua-plut?branch=master)
+[![codecov](https://codecov.io/gh/mah0x211/lua-plut/branch/master/graph/badge.svg)](https://codecov.io/gh/mah0x211/lua-plut)
 
 lua-plut is the path segmented lookup table module.  
 this module is used as a URL router.
