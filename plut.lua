@@ -24,8 +24,6 @@ local next = next
 local type = type
 local error = require('error')
 local new_error_message = error.message.new
-local error_is = error.is
-local error_cause = error.cause
 local check = error.check
 local check_table = check.table
 local check_func = check.func
@@ -49,43 +47,28 @@ local RESERVED = {
 --- @alias error userdata
 --- @class plut.error
 --- @field new function
-local PLUT_ERROR = error.type.new('plut.error')
 local ECATCHALL = 0
-local EPATHNAME = 1
-local EEMPTY = 2
-local ERESERVED = 3
-local EUNNAMED = 4
-local EALREADY = 5
-local EVALREADY = 6
-local ETOOMANYSEG = 7
-local ECOEXIST = 8
-local ERRSTR = {
-    [EPATHNAME] = 'pathname must be absolute path',
-    [EEMPTY] = 'cannot use empty segment',
-    [ERESERVED] = 'cannot use reserved segment',
-    [EUNNAMED] = 'cannot create unnamed variable segment',
-    [EALREADY] = 'segment already defined',
-    [EVALREADY] = 'variable segment already defined',
-    [ETOOMANYSEG] = 'cannot create a segment after a catch-all segment',
-    [ECOEXIST] = 'catch-all segment cannot coexist with other segments',
-}
+local EPATHNAME = error.type.new('plut.EPATHNAME', 1,
+                                 'pathname must be absolute path')
+local EEMPTY = error.type.new('plut.EEMPTY', 2, 'cannot use empty segment')
+local ERESERVED = error.type.new('plut.ERESERVED', 3,
+                                 'cannot use reserved segment')
+local EUNNAMED = error.type.new('plut.EUNNAMED', 4,
+                                'cannot create unnamed variable segment')
+local EALREADY = error.type.new('plut.EALREADY', 5, 'segment already defined')
+local EVALREADY = error.type.new('plut.EVALREADY', 6,
+                                 'variable segment already defined')
+local ETOOMANYSEG = error.type.new('plut.ETOOMANYSEG', 7,
+                                   'cannot create a segment after a catch-all segment')
+local ECOEXIST = error.type.new('plut.ECOEXIST', 8,
+                                'catch-all segment cannot coexist with other segments')
 
 --- mkerror
 --- @param op string
---- @param code integer
+--- @param errt error.type
 --- @return error err
-local function mkerror(op, code)
-    return PLUT_ERROR:new(new_error_message(ERRSTR[code], op, code), nil, 2)
-end
-
---- is_error
---- @param err error
---- @return table cause
-local function is_error(err)
-    err = error_is(err, PLUT_ERROR)
-    if err then
-        return error_cause(err)
-    end
+local function mkerror(op, errt)
+    return errt:new(new_error_message(nil, op), nil, 3)
 end
 
 --- has_child
@@ -498,7 +481,6 @@ end
 
 return {
     new = new,
-    is_error = is_error,
     EPATHNAME = EPATHNAME,
     EEMPTY = EEMPTY,
     ERESERVED = ERESERVED,

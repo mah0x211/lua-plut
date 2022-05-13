@@ -36,7 +36,7 @@ print(dump({
 
 -- set pathname with parameter segments
 p:set('/repos/:owner/:repo', 'repo-value')
-val, err, glob = p:lookup('/repos/foo/bar')
+val, err, glob = p:lookup('/repos/foo/bar', true)
 print(dump({
     val = val,
     err = err,
@@ -53,7 +53,7 @@ print(dump({
 
 -- set static segment on same level of parameter segments
 p:set('/repos/:owner/settings', 'settings-value')
-val, err, glob = p:lookup('/repos/foo/settings')
+val, err, glob = p:lookup('/repos/foo/settings', true)
 print(dump({
     val = val,
     err = err,
@@ -62,13 +62,13 @@ print(dump({
 -- {
 --     glob = {
 --         [1] = "repos-value",
---         owner = "foo"
+--         owner = "foo",
 --     },
 --     val = "settings-value"
 -- }
 
 -- it returns the value of the parameter segment if it does not match any static segment
-val, err, glob = p:lookup('/repos/foo/non-static-segment')
+val, err, glob = p:lookup('/repos/foo/non-static-segment', true)
 print(dump({
     val = val,
     err = err,
@@ -85,7 +85,8 @@ print(dump({
 
 -- set pathname with catch-all segment
 p:set('/repos/:owner/:repo/contents/*path', 'contents-path-value')
-val, err, glob = p:lookup('/repos/foo/bar/contents/my/contents/filename.txt')
+val, err, glob = p:lookup('/repos/foo/bar/contents/my/contents/filename.txt',
+                          true)
 print(dump({
     val = val,
     err = err,
@@ -105,22 +106,9 @@ print(dump({
 
 ## Error Handling
 
-some functions/methods return the error object that created by https://github.com/mah0x211/lua-error module.
+the following functions/methods return the error object created by https://github.com/mah0x211/lua-error module.
 
-### msg = plut.is_error(err)
-
-this function to extract the error message. if type of `err` is not the `plut.error`, it returns `nil`.
-
-**Parameters**
-
-- `err:error`: an error object.
-
-**Returns**
-
-- `msg:table`: an error message or `nil`.
-
-
-the value of the `code` field in the error message will be one of the following values;
+the error object can be one of the following `error.type`;
 
 - `plut.EPATHNAME`: pathname must be absolute path.
 - `plut.EEMPTY`: cannot use empty segment.

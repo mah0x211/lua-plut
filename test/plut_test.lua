@@ -204,8 +204,7 @@ function testcase.set()
     -- test that return EPATHNAME
     local ok, err = p:set('foo', 'new-value')
     assert.is_false(ok)
-    local msg = assert(plut.is_error(err))
-    assert.equal(msg.code, plut.EPATHNAME)
+    assert.equal(err.type, plut.EPATHNAME)
     assert.equal(p.tree, last_equal)
 
     -- test that return ERESERVED
@@ -215,30 +214,26 @@ function testcase.set()
     }) do
         ok, err = p:set(pathname, 'new-value')
         assert.is_false(ok)
-        msg = assert(plut.is_error(err))
-        assert.equal(msg.code, plut.ERESERVED)
+        assert.equal(err.type, plut.ERESERVED)
         assert.equal(p.tree, last_equal)
     end
 
     -- test that return EEMPTY
     ok, err = p:set('//', 'new-value')
     assert.is_false(ok)
-    msg = assert(plut.is_error(err))
-    assert.equal(msg.code, plut.EEMPTY)
+    assert.equal(err.type, plut.EEMPTY)
     assert.equal(p.tree, last_equal)
 
     -- test that return EALREADY
     ok, err = p:set('/foo', 'new-value')
     assert.is_false(ok)
-    msg = assert(plut.is_error(err))
-    assert.equal(msg.code, plut.EALREADY)
+    assert.equal(err.type, plut.EALREADY)
     assert.equal(p.tree, last_equal)
 
     -- test that return EUNNAMED
     ok, err = p:set('/:/bar', 'new-value')
     assert.is_false(ok)
-    msg = assert(plut.is_error(err))
-    assert.equal(msg.code, plut.EUNNAMED)
+    assert.equal(err.type, plut.EUNNAMED)
     assert.equal(p.tree, last_equal)
 
     -- test that return EVALREADY
@@ -248,8 +243,7 @@ function testcase.set()
     }) do
         ok, err = p:set(v, 'new-value')
         assert.is_false(ok)
-        msg = assert(plut.is_error(err))
-        assert.equal(msg.code, plut.EVALREADY)
+        assert.equal(err.type, plut.EVALREADY)
         assert.equal(p.tree, last_equal)
     end
 
@@ -260,8 +254,7 @@ function testcase.set()
     }) do
         ok, err = p:set(v, 'new-value')
         assert.is_false(ok)
-        msg = assert(plut.is_error(err))
-        assert.equal(msg.code, plut.ETOOMANYSEG)
+        assert.equal(err.type, plut.ETOOMANYSEG)
         assert.equal(p.tree, last_equal)
     end
 
@@ -272,8 +265,7 @@ function testcase.set()
     }) do
         ok, err = p:set(v, 'new-value')
         assert.is_false(ok)
-        msg = assert(plut.is_error(err))
-        assert.equal(msg.code, plut.ECOEXIST)
+        assert.equal(err.type, plut.ECOEXIST)
         assert.equal(p.tree, last_equal)
     end
 
