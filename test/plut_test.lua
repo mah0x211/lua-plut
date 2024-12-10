@@ -1,6 +1,7 @@
 require('luacov')
 local unpack = unpack or table.unpack
 local testcase = require('testcase')
+local assert = require('assert')
 local plut = require('plut')
 
 function testcase.set()
@@ -333,6 +334,16 @@ function testcase.del()
     assert.is_nil(val)
     assert.is_nil(err)
 
+    -- test that return nil if a pathname contains the reserved segments
+    for _, pathname in ipairs({
+        '/#',
+        '/foo/^/baz',
+    }) do
+        val, err = p:del(pathname)
+        assert.is_nil(val)
+        assert.is_nil(err)
+    end
+
     -- test that delete segments
     for _, v in ipairs({
         {
@@ -615,16 +626,26 @@ function testcase.get()
         assert(p:set(v.pathname, v.value))
     end
 
-    -- test that returns the value of pathname
+    -- test that get the value of pathname
     for _, v in ipairs(pathvalues) do
         local val = assert(p:get(v.pathname))
         assert.equal(val, v.value)
     end
 
-    -- test that return nil
+    -- test that return nil if not found
     local val, err = p:get('/foo/:baa')
     assert.is_nil(val)
     assert.is_nil(err)
+
+    -- test that return nil if a pathname contains the reserved segments
+    for _, pathname in ipairs({
+        '/#',
+        '/hello/^/world',
+    }) do
+        val, err = p:get(pathname)
+        assert.is_nil(val)
+        assert.is_nil(err)
+    end
 
     -- test that throw an error
     err = assert.throws(function()
@@ -738,6 +759,17 @@ function testcase.lookup()
         assert.equal(val, v.value)
         assert.is_nil(err)
         assert.equal(glob, v.glob)
+    end
+
+    -- test that return nil if pathname contains the reserved segments
+    for _, pathname in ipairs({
+        '/#',
+        '/foo/^/baz',
+    }) do
+        local val, err, glob = p:lookup(pathname)
+        assert.is_nil(val)
+        assert.is_nil(err)
+        assert.is_nil(glob)
     end
 
     -- test that throw an error
