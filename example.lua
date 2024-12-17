@@ -3,9 +3,18 @@ local plut = require('plut')
 
 -- create instance of plut
 local p = plut.new()
+print(p) -- plut: 0x600001afa6c0
 
 -- set pathname
-p:set('/repos', 'repos-value')
+local ok, err = p:set('/repos', 'repos-value')
+print(dump({
+    ok = ok,
+    err = err,
+}))
+-- {
+--     ok = true
+-- }
+
 local val, err, glob = p:lookup('/repos')
 print(dump({
     val = val,
@@ -84,4 +93,13 @@ print(dump({
 --         repo = "bar"
 --     },
 --     val = "contents-path-value"
+-- }
+
+-- dump all pathnames and values in the lookup table
+print(dump(p:dump()))
+-- {
+--     ["/repos"] = "repos-value",
+--     ["/repos/:owner/:repo"] = "repo-value",
+--     ["/repos/:owner/:repo/contents/*path"] = "contents-path-value",
+--     ["/repos/:owner/settings"] = "settings-value"
 -- }

@@ -29,7 +29,6 @@ local check_table = check.table
 local check_func = check.func
 local find = string.find
 local sub = string.sub
-local setmetatable = setmetatable
 --- symbols
 local SYM_VAR = '^'
 local SYM_ALL = '*'
@@ -94,11 +93,14 @@ end
 --- @param node table
 --- @param mklist table
 --- @return table node
---- @return error err
+--- @return any err
 local function mknode(_, _, seg, node, mklist)
     if #seg == 0 then
         -- cannot use empty segment
         return nil, mkerror('mknode', EEMPTY)
+    elseif RESERVED[seg] then
+        -- cannot create a reserved segment
+        return nil, mkerror('mknode', ERESERVED)
     elseif mklist.is_catchall then
         -- cannot create a segment after a catch-all segment
         return nil, mkerror('mknode', ETOOMANYSEG)
@@ -175,8 +177,13 @@ end
 --- @param seg string
 --- @param node table
 --- @param pathz table
---- @return table node
+--- @return table? node
 local function trace(_, _, seg, node, pathz)
+    if RESERVED[seg] then
+        -- ignore reserved segment
+        return
+    end
+
     -- variable segment
     local vseg = VSEGMENT[sub(seg, 1, 1)]
 
@@ -210,8 +217,13 @@ end
 --- @param pos integer
 --- @param seg string
 --- @param node table
---- @return table node
+--- @return table? node
 local function get(_, _, seg, node)
+    if RESERVED[seg] then
+        -- ignore reserved segment
+        return
+    end
+
     -- variable segment
     local vseg = VSEGMENT[sub(seg, 1, 1)]
     if vseg then
@@ -232,8 +244,8 @@ end
 --- @param node table
 --- @param glob table
 --- @param pickup boolean
---- @return table node
---- @return integer err
+--- @return table? node
+--- @return integer? err
 local function lookup(pathname, pos, seg, node, glob, pickup)
     if pickup then
         -- pickup the node-value
@@ -247,8 +259,8 @@ local function lookup(pathname, pos, seg, node, glob, pickup)
         end
     end
 
-    -- found segment
-    if node[seg] then
+    if not RESERVED[seg] and node[seg] then
+        -- found segment
         return node[seg]
     end
 
@@ -268,13 +280,13 @@ local function lookup(pathname, pos, seg, node, glob, pickup)
 end
 
 --- traverse
---- @alias getchildfn fun(pathname:string, pos:integer, seg:string, node:table, ...):table,error
+--- @alias getchildfn fun(pathname:string, pos:integer, seg:string, node:table, ...):(node:table, err:any)
 --- @param pathname string
 --- @param node table
 --- @param fn getchildfn
 --- @vararg any arguments for fn
 --- @return any val
---- @return error err
+--- @return any err
 local function traverse(pathname, node, fn, ...)
     check_table(node, 2)
     check_func(fn, 3)
@@ -287,14 +299,8 @@ local function traverse(pathname, node, fn, ...)
     local pos = 2
     local head, tail = find(pathname, '/', pos, true)
     while head do
-        local seg = sub(pathname, pos, head - 1)
-
-        -- there is reserved segment name
-        if RESERVED[seg] then
-            return nil, mkerror('traverse', ERESERVED)
-        end
-
         -- get child node
+        local seg = sub(pathname, pos, head - 1)
         local child, err = fn(pathname, pos, seg, node, ...)
         if not child or err then
             return child, err
@@ -307,14 +313,8 @@ local function traverse(pathname, node, fn, ...)
 
     -- check last segment
     if pos <= #pathname then
-        local seg = sub(pathname, pos)
-
-        -- there is reserved segment name
-        if RESERVED[seg] then
-            return nil, mkerror('traverse', ERESERVED)
-        end
-
         -- get child node
+        local seg = sub(pathname, pos)
         return fn(pathname, pos, seg, node, ...)
     end
 
@@ -323,16 +323,21 @@ local function traverse(pathname, node, fn, ...)
 end
 
 --- @class Plut
---- @field symbol string
 --- @field tree table
 local Plut = {}
-Plut.__index = Plut
+
+-- init intialize the Plut instance and return it
+--- @return Plut self
+function Plut:init()
+    self.tree = {}
+    return self
+end
 
 --- set
 --- @param pathname string
 --- @param val any
 --- @return boolean ok
---- @return error err
+--- @return any err
 function Plut:set(pathname, val)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
@@ -363,7 +368,7 @@ end
 --- del
 --- @param pathname string
 --- @return any val
---- @return error err
+--- @return any err
 function Plut:del(pathname)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
@@ -397,7 +402,7 @@ end
 --- get
 --- @param pathname string
 --- @return any val
---- @return error err
+--- @return any err
 function Plut:get(pathname)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
@@ -449,8 +454,8 @@ end
 --- @param pathname string
 --- @param pickup boolean
 --- @return any val
---- @return error err
---- @return table glob
+--- @return any err
+--- @return table? glob
 function Plut:lookup(pathname, pickup)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
@@ -471,16 +476,8 @@ function Plut:lookup(pathname, pickup)
     end
 end
 
---- new
---- @return Plut
-local function new()
-    return setmetatable({
-        tree = {},
-    }, Plut)
-end
-
 return {
-    new = new,
+    new = require('metamodule').new(Plut),
     EPATHNAME = EPATHNAME,
     EEMPTY = EEMPTY,
     ERESERVED = ERESERVED,
