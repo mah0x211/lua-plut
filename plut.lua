@@ -29,7 +29,6 @@ local check_table = check.table
 local check_func = check.func
 local find = string.find
 local sub = string.sub
-local setmetatable = setmetatable
 --- symbols
 local SYM_VAR = '^'
 local SYM_ALL = '*'
@@ -324,10 +323,15 @@ local function traverse(pathname, node, fn, ...)
 end
 
 --- @class Plut
---- @field symbol string
 --- @field tree table
 local Plut = {}
-Plut.__index = Plut
+
+-- init intialize the Plut instance and return it
+--- @return Plut self
+function Plut:init()
+    self.tree = {}
+    return self
+end
 
 --- set
 --- @param pathname string
@@ -472,16 +476,8 @@ function Plut:lookup(pathname, pickup)
     end
 end
 
---- new
---- @return Plut
-local function new()
-    return setmetatable({
-        tree = {},
-    }, Plut)
-end
-
 return {
-    new = new,
+    new = require('metamodule').new(Plut),
     EPATHNAME = EPATHNAME,
     EEMPTY = EEMPTY,
     ERESERVED = ERESERVED,
