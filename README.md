@@ -26,6 +26,7 @@ the error object can be one of the following `error.type`;
 - `plut.EVALREADY`: variable segment already defined.
 - `plut.ETOOMANYSEG`: cannot create a segment after a catch-all segment.
 - `plut.ECOEXIST`: catch-all segment cannot coexist with other segments.
+- `plut.EINVAL`: invalid segment detected.
 
 
 ## p = plut.new()
