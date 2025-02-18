@@ -290,6 +290,36 @@ function testcase.set()
     end
 end
 
+function testcase.set_with_validator()
+    local p = assert(plut.new())
+
+    -- test that failed to set a value with a validator
+    local target
+    local ok, err = p:set('/foo/hello/world', 'new-value', function(seg)
+        if seg == 'hello' then
+            target = seg
+            return false
+        end
+        return true
+    end)
+    assert.is_false(ok)
+    assert.equal(err.type, plut.EINVAL)
+    assert.equal(target, 'hello')
+    assert.match(err, 'invalid segment detected ("hello")')
+
+    -- test that use a error from the validator function
+    ok, err = p:set('/foo/hello/world', 'new-value', function(seg)
+        if seg == 'world' then
+            return false, 'custom error'
+        end
+        return true
+    end)
+    assert.is_false(ok)
+    assert.equal(err.type, plut.EINVAL)
+    assert.equal(target, 'hello')
+    assert.match(err, 'invalid segment detected (custom error)')
+end
+
 function testcase.del()
     local p = assert(plut.new())
     for _, v in ipairs({
