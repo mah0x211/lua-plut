@@ -22,6 +22,7 @@
 --- assign to local
 local next = next
 local type = type
+local format = string.format
 local error = require('error')
 local new_error_message = error.message.new
 local check = error.check
@@ -61,13 +62,15 @@ local ETOOMANYSEG = error.type.new('plut.ETOOMANYSEG', 7,
                                    'cannot create a segment after a catch-all segment')
 local ECOEXIST = error.type.new('plut.ECOEXIST', 8,
                                 'catch-all segment cannot coexist with other segments')
+local EINVAL = error.type.new('plut.EINVAL', 9, 'invalid segment detected')
 
 --- mkerror
 --- @param op string
 --- @param errt error.type
+--- @param msg any
 --- @return error err
-local function mkerror(op, errt)
-    return errt:new(new_error_message(nil, op), nil, 3)
+local function mkerror(op, errt, msg)
+    return errt:new(new_error_message(msg, op), nil, 3)
 end
 
 --- has_child
@@ -87,14 +90,14 @@ local function has_child(node)
 end
 
 --- mknode
---- @param pathname string
---- @param pos integer
+--- @param _ any
 --- @param seg string
 --- @param node table
 --- @param mklist table
+--- @param validator function?
 --- @return table node
 --- @return any err
-local function mknode(_, _, seg, node, mklist)
+local function mknode(_, _, seg, node, mklist, validator)
     if #seg == 0 then
         -- cannot use empty segment
         return nil, mkerror('mknode', EEMPTY)
@@ -159,6 +162,17 @@ local function mknode(_, _, seg, node, mklist)
     -- found node
     if node[seg] then
         return node[seg]
+    end
+
+    -- validate segment
+    if validator then
+        local ok, err = validator(seg)
+        if not ok then
+            if err == nil then
+                err = format('%q', seg)
+            end
+            return nil, mkerror('mknode', EINVAL, err)
+        end
     end
 
     -- create new node
@@ -336,9 +350,10 @@ end
 --- set
 --- @param pathname string
 --- @param val any
+--- @param validator function?
 --- @return boolean ok
 --- @return any err
-function Plut:set(pathname, val)
+function Plut:set(pathname, val, validator)
     if type(pathname) ~= 'string' then
         error('pathname must be string', 2)
     elseif val == nil then
@@ -347,7 +362,7 @@ function Plut:set(pathname, val)
 
     -- create node
     local mklist = {}
-    local node, err = traverse(pathname, self.tree, mknode, mklist)
+    local node, err = traverse(pathname, self.tree, mknode, mklist, validator)
 
     if not node then
         -- remove created node
@@ -486,4 +501,5 @@ return {
     EVALREADY = EVALREADY,
     ETOOMANYSEG = ETOOMANYSEG,
     ECOEXIST = ECOEXIST,
+    EINVAL = EINVAL,
 }

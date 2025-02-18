@@ -47,14 +47,22 @@ print(p) -- plut: 0x600000fee700
 ```
 
 
-## ok, err = p:set( pathname, val )
+## ok, err = plut:set( pathname, val [, validator] )
 
-set the value to the last segment of the specified pathname.
+set the value to the last segment of the specified pathname. if the validator function returns `false`, its error message will be returned.
 
 **Parameters**
 
 - `pathname:string`: target pathname.
 - `val:any`: any value except `nil`.
+- `validator:function`: a function that validates each segment value. the function must return `true` on a valid segment value.
+    ```lua
+    -- sepecification of the validator function
+    -- @param seg:string segment value
+    -- @return ok:boolean true on a valid segment value.
+    -- @return err:any an error message on an invalid segment value. (optional)
+    ok, err = validator( seg )
+    ```
 
 **Returns**
 
@@ -207,7 +215,7 @@ print(dump(p:dump()))
 ```
 
 
-## val, err = p:del( pathname )
+## val, err = plut:del( pathname )
 
 delete the specified pathname.
 
@@ -221,7 +229,7 @@ delete the specified pathname.
 - `err:error`: an error object.
 
 
-## val, err = p:get( pathname )
+## val, err = plut:get( pathname )
 
 get the value of the specified pathname.
 
@@ -235,7 +243,7 @@ get the value of the specified pathname.
 - `err:error`: an error object.
 
 
-## list = p:dump()
+## list = plut:dump()
 
 get the list of registered pathname/value pairs.
 
@@ -244,7 +252,7 @@ get the list of registered pathname/value pairs.
 - `list:table`: the list of registered pathname/value pairs.
 
 
-## val, err, glob = p:lookup( pathname [, pickup] )
+## val, err, glob = plut:lookup( pathname [, pickup] )
 
 lookup the values in the specified pathname.
 
@@ -259,4 +267,8 @@ lookup the values in the specified pathname.
 - `err:error`: an error object.
 - `glob:table`: holds the node values on the route up to the last segment, and the values of variable segment.
 
+
+## LICENSE
+
+MIT License
 
